@@ -1,0 +1,10 @@
+#!/usr/bin/with-contenv bash
+
+archive_path="$(mktemp -d)"
+trap 'rm -rf "${archive_path}"' EXIT
+
+if /usr/bin/helm completion bash > "${archive_path}/helm-completion"; then
+	install -D -m 644 "${archive_path}/helm-completion" /etc/bash_completion.d/helm
+else
+	echo "**** Failed to generate Helm bash completions, leaving the placeholder file in place ****"
+fi

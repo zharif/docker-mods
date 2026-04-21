@@ -1,0 +1,22 @@
+#!/usr/bin/with-contenv bash
+
+if [ ! -f "/etc/apt/sources.list.d/helm-stable-debian.list" ]; then
+    echo "**** Configuring Helm package repo ****"
+    mkdir -p -m 755 /etc/apt/keyrings /etc/apt/sources.list.d
+    if command -v gpg > /dev/null 2>&1; then
+        curl -fsSL https://packages.buildkite.com/helm-linux/helm-debian/gpgkey | gpg --dearmor -o /etc/apt/keyrings/helm.gpg
+        keyring_path="/etc/apt/keyrings/helm.gpg"
+    else
+        curl -fsSL -o /etc/apt/keyrings/helm.asc https://packages.buildkite.com/helm-linux/helm-debian/gpgkey
+        keyring_path="/etc/apt/keyrings/helm.asc"
+    fi
+
+    chmod 644 "${keyring_path}"
+    echo "deb [signed-by=${keyring_path}] https://packages.buildkite.com/helm-linux/helm-debian/any/ any main" > /etc/apt/sources.list.d/helm-stable-debian.list
+    chmod 644 /etc/apt/sources.list.d/helm-stable-debian.list
+else
+    echo "**** Helm package repo already configured ****"
+fi
+
+echo "**** Adding Helm package to install list ****"
+echo "helm" >> /mod-repo-packages-to-install.list

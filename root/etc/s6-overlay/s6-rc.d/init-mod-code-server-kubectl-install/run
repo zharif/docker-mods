@@ -1,3 +1,12 @@
 #!/usr/bin/with-contenv bash
 
 install-extension ms-kubernetes-tools.vscode-kubernetes-tools
+
+archive_path="$(mktemp -d)"
+trap 'rm -rf "${archive_path}"' EXIT
+
+if /usr/bin/kubectl completion bash > "${archive_path}/kubectl-completion"; then
+	install -D -m 644 "${archive_path}/kubectl-completion" /etc/bash_completion.d/kubectl
+else
+	echo "**** Failed to generate kubectl bash completions, leaving the placeholder file in place ****"
+fi

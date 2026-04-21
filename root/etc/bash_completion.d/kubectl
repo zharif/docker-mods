@@ -1,3 +1,1 @@
-if [ -x /usr/bin/kubectl ]; then
-	source <(/usr/bin/kubectl completion bash)
-fi
+# Replaced at container start by init-mod-code-server-kubectl-install.

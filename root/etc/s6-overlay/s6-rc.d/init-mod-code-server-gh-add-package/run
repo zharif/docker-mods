@@ -1,0 +1,13 @@
+#!/usr/bin/with-contenv bash
+
+if [ ! -f "/etc/apt/sources.list.d/github-cli.list" ]; then
+    echo "**** Adding GitHub CLI packages to install list ****"
+    mkdir -p -m 755 /etc/apt/keyrings /etc/apt/sources.list.d
+    curl -fsSL -o /etc/apt/keyrings/githubcli-archive-keyring.gpg https://cli.github.com/packages/githubcli-archive-keyring.gpg
+    chmod 644 /etc/apt/keyrings/githubcli-archive-keyring.gpg
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" > /etc/apt/sources.list.d/github-cli.list
+    chmod 644 /etc/apt/sources.list.d/github-cli.list
+    echo "gh" >> /mod-repo-packages-to-install.list
+else
+    echo "**** GitHub CLI package repo already configured, skipping ****"
+fi

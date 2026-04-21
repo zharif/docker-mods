@@ -1,0 +1,10 @@
+#!/usr/bin/with-contenv bash
+
+archive_path="$(mktemp -d)"
+trap 'rm -rf "${archive_path}"' EXIT
+
+if /usr/bin/gh completion -s bash > "${archive_path}/gh-completion"; then
+	install -D -m 644 "${archive_path}/gh-completion" /etc/bash_completion.d/gh
+else
+	echo "**** Failed to generate gh bash completions, leaving the placeholder file in place ****"
+fi

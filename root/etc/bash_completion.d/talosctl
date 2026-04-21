@@ -1,3 +1,0 @@
-if command -v talosctl >/dev/null 2>&1; then
-	source <(talosctl completion bash)
-fi

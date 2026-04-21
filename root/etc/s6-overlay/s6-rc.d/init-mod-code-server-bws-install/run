@@ -1,0 +1,88 @@
+#!/usr/bin/with-contenv bash
+
+set -e
+
+BWS_VERSION="${BWS_VERSION:-}"
+
+case "$(uname -m)" in
+	x86_64|amd64)
+		bws_arch="x86_64"
+		;;
+	aarch64|arm64)
+		bws_arch="aarch64"
+		;;
+	*)
+		echo "**** Unsupported architecture for bws: $(uname -m) ****"
+		exit 1
+		;;
+esac
+
+detect_latest_bws_version() {
+	curl -fsSL "https://api.github.com/repos/bitwarden/sdk-sm/releases?per_page=100" \
+		| awk -F'"' '/"tag_name": "bws-v/ && !found { sub(/^bws-v/, "", $4); print $4; found=1 } END { if (!found) exit 1 }'
+}
+
+checksum_file() {
+	if command -v sha256sum >/dev/null 2>&1; then
+		sha256sum "$1" | awk '{print $1}'
+	elif command -v shasum >/dev/null 2>&1; then
+		shasum -a 256 "$1" | awk '{print $1}'
+	else
+		return 1
+	fi
+}
+
+extract_bws() {
+	if command -v unzip >/dev/null 2>&1; then
+		unzip -oj "$1" bws -d "$2" >/dev/null
+	elif command -v busybox >/dev/null 2>&1 && busybox unzip -oj "$1" bws -d "$2" >/dev/null 2>&1; then
+		:
+	elif command -v bsdtar >/dev/null 2>&1; then
+		bsdtar -xf "$1" -C "$2" bws
+	else
+		echo "**** No supported archive extractor found for the bws release ****"
+		exit 1
+	fi
+}
+
+if [ -z "${BWS_VERSION}" ]; then
+	BWS_VERSION="$(detect_latest_bws_version)"
+fi
+
+if [ -z "${BWS_VERSION}" ]; then
+	echo "**** Failed to determine the latest bws release ****"
+	exit 1
+fi
+
+bws_archive="bws-${bws_arch}-unknown-linux-musl-${BWS_VERSION}.zip"
+release_base_url="https://github.com/bitwarden/sdk-sm/releases/download/bws-v${BWS_VERSION}"
+archive_path="$(mktemp -d)"
+trap 'rm -rf "${archive_path}"' EXIT
+
+echo "**** Installing Bitwarden Secrets Manager CLI ${BWS_VERSION} ****"
+curl -fsSL "${release_base_url}/${bws_archive}" -o "${archive_path}/bws.zip"
+if actual_checksum="$(checksum_file "${archive_path}/bws.zip")"; then
+	curl -fsSL "${release_base_url}/bws-sha256-checksums-${BWS_VERSION}.txt" -o "${archive_path}/bws-checksums.txt"
+	expected_checksum="$(awk -v asset="${bws_archive}" '$2 == asset { print $1; exit }' "${archive_path}/bws-checksums.txt")"
+
+	if [ -z "${expected_checksum}" ]; then
+		echo "**** Failed to read the expected checksum for ${bws_archive} ****"
+		exit 1
+	fi
+
+	if [ "${actual_checksum}" != "${expected_checksum}" ]; then
+		echo "**** Checksum validation failed for ${bws_archive} ****"
+		exit 1
+	fi
+else
+	echo "**** No SHA-256 tool available, skipping checksum validation for ${bws_archive} ****"
+fi
+
+extract_bws "${archive_path}/bws.zip" "${archive_path}"
+install -D -m 755 "${archive_path}/bws" /usr/local/bin/bws
+
+if /usr/local/bin/bws completions bash > "${archive_path}/bws-completion"; then
+	install -D -m 644 "${archive_path}/bws-completion" /etc/bash_completion.d/bws
+else
+	echo "**** Failed to generate bws bash completions, leaving the placeholder file in place ****"
+fi

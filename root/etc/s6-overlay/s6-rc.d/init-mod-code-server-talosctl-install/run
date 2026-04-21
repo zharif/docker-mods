@@ -23,3 +23,9 @@ temp_file="$(mktemp)"
 trap 'rm -f "${temp_file}"' EXIT
 curl -fsSL "https://github.com/siderolabs/talos/releases/latest/download/${talosctl_asset}" -o "${temp_file}"
 install -D -m 755 "${temp_file}" /usr/local/bin/talosctl
+
+if /usr/local/bin/talosctl completion bash > "${temp_file}/talosctl-completion"; then
+	install -D -m 644 "${temp_file}/talosctl-completion" /etc/bash_completion.d/talosctl
+else
+	echo "**** Failed to generate talosctl bash completions, leaving the placeholder file in place ****"
+fi

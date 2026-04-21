@@ -59,7 +59,7 @@ release_base_url="https://github.com/bitwarden/sdk-sm/releases/download/bws-v${B
 archive_path="$(mktemp -d)"
 trap 'rm -rf "${archive_path}"' EXIT
 
-echo "**** Installing Bitwarden Secrets Manager CLI ${BWS_VERSION} ****"
+echo "**** Installing Bitwarden Secrets Manager CLI ${BWS_VERSION} after package install ****"
 curl -fsSL "${release_base_url}/${bws_archive}" -o "${archive_path}/bws.zip"
 if actual_checksum="$(checksum_file "${archive_path}/bws.zip")"; then
 	curl -fsSL "${release_base_url}/bws-sha256-checksums-${BWS_VERSION}.txt" -o "${archive_path}/bws-checksums.txt"

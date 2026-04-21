@@ -1,3 +1,0 @@
-#!/usr/bin/with-contenv bash
-
-install-extension ms-kubernetes-tools.vscode-kubernetes-tools

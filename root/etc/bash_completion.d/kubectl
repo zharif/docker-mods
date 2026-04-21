@@ -1,3 +1,0 @@
-if [ -x /usr/bin/kubectl ]; then
-	source <(/usr/bin/kubectl completion bash)
-fi

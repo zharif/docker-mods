@@ -1,0 +1,25 @@
+#!/usr/bin/with-contenv bash
+
+set -e
+
+case "$(uname -m)" in
+	x86_64|amd64)
+		talosctl_asset="talosctl-linux-amd64"
+		;;
+	aarch64|arm64)
+		talosctl_asset="talosctl-linux-arm64"
+		;;
+	armv7l|armv7)
+		talosctl_asset="talosctl-linux-armv7"
+		;;
+	*)
+		echo "**** Unsupported architecture: $(uname -m) ****"
+		exit 1
+		;;
+esac
+
+echo "**** Installing talosctl ****"
+temp_file="$(mktemp)"
+trap 'rm -f "${temp_file}"' EXIT
+curl -fsSL "https://github.com/siderolabs/talos/releases/latest/download/${talosctl_asset}" -o "${temp_file}"
+install -D -m 755 "${temp_file}" /usr/local/bin/talosctl
